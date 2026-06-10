@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>댕댕이 이상형 월드컵 + 히스토리</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #f8fafc;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+      color: #334155;
+    }
+
+    h1 {
+      font-size: 28px;
+      color: #1e293b;
+      margin-bottom: 5px;
+    }
+
+    .round-info {
+      display: inline-block;
+      font-size: 18px;
+      font-weight: bold;
+      color: #4f7cff;
+      margin-bottom: 25px;
+      background: #e8efff;
+      padding: 6px 20px;
+      border-radius: 20px;
+    }
+
+    /* 매치 레이아웃 */
+    .match-container {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 25px;
+      margin-bottom: 40px;
+    }
+
+    .vs-circle {
+      width: 55px;
+      height: 55px;
+      background: #ff4757;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-style: italic;
+      font-size: 18px;
+      box-shadow: 0 4px 10px rgba(255, 71, 87, 0.3);
+      flex-shrink: 0;
+    }
+
+    /* 강아지 카드 스타일 */
+    .dog-card {
+      flex: 1;
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 3px solid transparent;
+    }
+
+    .dog-card:hover {
+      transform: translateY(-5px);
+      border-color: #4f7cff;
+      box-shadow: 0 15px 30px rgba(79, 124, 255, 0.15);
+    }
+
+    .image-box {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      background: #f1f5f9;
+      overflow: hidden;
+    }
+
+    .image-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .breed-name {
+      padding: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      background: white;
+    }
+
+    /* 📜 히스토리 섹션 스타일 */
+    .history-container {
+      width: 100%;
+      max-width: 800px;
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+    }
+
+    .history-container h2 {
+      font-size: 16px;
+      color: #64748b;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 10px;
+      text-align: left;
+    }
+
+    .history-grid {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+    }
+
+    .history-item {
+      flex-shrink: 0;
+      width: 90px;
+      text-align: center;
+      animation: popIn 0.3s ease-out forwards;
+    }
+
+    .history-item .thumb-box {
+      width: 90px;
+      height: 90px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid #10b981; /* 선택된 애들은 초록 테두리 */
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      margin-bottom: 5px;
+    }
+
+    .history-item .thumb-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .history-item p {
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item .round-badge {
+      font-size: 9px;
+      background: #e2e8f0;
+      padding: 2px 4px;
+      border-radius: 4px;
+      color: #64748b;
+    }
+
+    /* 우승 화면 */
+    .winner-container {
+      display: none;
+      text-align: center;
+      animation: popIn 0.5s ease-out forwards;
+    }
+
+    .winner-card {
+      width: 320px;
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+      margin: 20px auto;
+      border: 4px solid #f59e0b;
+    }
+
+    .crown { font-size: 45px; margin-bottom: 5px; }
+    
+    .restart-btn {
+      background: #4f7cff;
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .loading-screen {
+      position: fixed;
+      top:0; left:0; width:100%; height:100%;
+      background: rgba(255,255,255,0.9);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 100; font-weight: bold;
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @media (max-width: 600px) {
+      .match-container { flex-direction: column; gap: 15px; }
+      .vs-circle { margin: -5px 0; }
+      .dog-card { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loading" class="loading-screen">라인업 구성 중... 🐾</div>
+
+  <div id="gameArea" style="display:none; text-align:center; width:100%;">
+    <h1>🏆 댕댕이 선택의 시간 🏆</h1>
+    <div id="roundTitle" class="round-info">8강</div>
+
+    <div class="match-container">
+      <div class="dog-card" onclick="selectDog(0)">
+        <div class="image-box"><img id="leftImg" src=""></div>
+        <div class="breed-name" id="leftName">후보 A</div>
+      </div>
+
+      <div class="vs-circle">VS</div>
+
+      <div class="dog-card" onclick="selectDog(1)">
+        <div class="image-box"><img id="rightImg" src=""></div>
+        <div class="breed-name" id="rightName">후보 B</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="winnerArea" class="winner-container">
+    <div class="crown">👑</div>
+    <h1>나의 최애 댕댕이 결정!</h1>
+    <div class="winner-card">
+      <div class="image-box"><img id="winnerImg"></div>
+      <div class="breed-name" id="winnerName">우승자</div>
+    </div>
+    <button class="restart-btn" onclick="initWorldCup()">처음부터 다시하기</button>
+  </div>
+
+  <div class="history-container">
+    <h2>🐾 내가 고른 강아지 히스토리</h2>
+    <div class="history-grid" id="historyGrid">
+      </div>
+  </div>
+
+  <script>
+    const breedDict = {
+      'retriever-golden': '골든 리트리버', 'retriever-labrador': '래브라도 리트리버',
+      'pomeranian': '포메라니안', 'chihuahua': '치와와', 'maltese': '말티즈', 
+      'pug': '퍼그', 'shiba': '시바견', 'husky': '허스키', 'corgi-cardigan': '웰시 코기',
+      'bulldog-french': '프렌치 불독', 'beagle': '비글', 'dachshund': '닥스훈트'
+    };
+
+    let allDogs = [];
+    let nextRoundDogs = [];
+    let currentMatchIndex = 0;
+    let currentRoundSize = 8;
+
+    function parseBreed(url) {
+      try {
+        const raw = url.split("breeds/")[1].split("/")[0];
+        return breedDict[raw] || raw.split('-').reverse().map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      } catch (e) { return "귀여운 댕댕이"; }
+    }
+
+    // 게임 및 히스토리 초기화
+    async function initWorldCup() {
+      document.getElementById("loading").style.display = "flex";
+      document.getElementById("gameArea").style.display = "block";
+      document.getElementById("winnerArea").style.display = "none";
+      document.getElementById("historyGrid").innerHTML = ""; // 히스토리 비우기
+      
+      allDogs = [];
+      nextRoundDogs = [];
+      currentMatchIndex = 0;
+      currentRoundSize = 8;
+
+      try {
+        const requests = Array.from({ length: 8 }, () => fetch("https://dog.ceo/api/breeds/image/random"));
+        const responses = await Promise.all(requests);
+        const dataList = await Promise.all(responses.map(res => res.json()));
+
+        allDogs = dataList.map(data => ({
+          url: data.message,
+          name: parseBreed(data.message)
+        }));
+
+        document.getElementById("loading").style.display = "none";
+        showMatch();
+      } catch (e) {
+        alert("데이터 로드 실패!");
+      }
+    }
+
+    // 현재 대진 표시
+    function showMatch() {
+      const roundText = currentRoundSize === 2 ? "🔥 결승전 🔥" : `${currentRoundSize}강 (${currentMatchIndex + 1}/${currentRoundSize / 2})`;
+      document.getElementById("roundTitle").textContent = roundText;
+
+      const leftDog = allDogs[currentMatchIndex * 2];
+      const rightDog = allDogs[currentMatchIndex * 2 + 1];
+
+      document.getElementById("leftImg").src = leftDog.url;
+      document.getElementById("leftName").textContent = leftDog.name;
+      document.getElementById("rightImg").src = rightDog.url;
+      document.getElementById("rightName").textContent = rightDog.name;
+    }
+
+    // 강아지 클릭 시
+    function selectDog(type) {
+      const selectedDog = allDogs[currentMatchIndex * 2 + type];
+      
+      // 1. 하단 히스토리에 선택된 강아지 추가하기
+      pushToHistory(selectedDog, currentRoundSize);
+
+      // 2. 다음 라운드로 진출
+      nextRoundDogs.push(selectedDog);
+      currentMatchIndex++;
+
+      // 한 라운드 종료 검사
+      if (currentMatchIndex >= currentRoundSize / 2) {
+        if (nextRoundDogs.length === 1) {
+          showWinner(nextRoundDogs[0]);
+        } else {
+          allDogs = [...nextRoundDogs];
+          nextRoundDogs = [];
+          currentMatchIndex = 0;
+          currentRoundSize = allDogs.length;
+          showMatch();
+        }
+      } else {
+        showMatch();
+      }
+    }
+
+    // 히스토리 UI에 노드를 동적으로 생성하는 함수
+    function pushToHistory(dog, round) {
+      const grid = document.getElementById("historyGrid");
+      
+      const item = document.createElement("div");
+      item.className = "history-item";
+
+      const roundName = round === 2 ? "결승" : `${round}강`;
+
+      item.innerHTML = `
+        <div class="thumb-box">
+          <img src="${dog.url}" alt="${dog.name}">
+        </div>
+        <p>${dog.name}</p>
+        <span class="round-badge">${roundName} 통과</span>
+      `;
+
+      grid.appendChild(item);
+      
+      // 새 요소가 추가되면 자동으로 히스토리 스크롤을 오른쪽 끝으로 밀어줌
+      grid.scrollLeft = grid.scrollWidth;
+    }
+
+    // 우승 선언
+    function showWinner(winner) {
+      document.getElementById("gameArea").style.display = "none";
+      document.getElementById("winnerArea").style.display = "block";
+      document.getElementById("winnerImg").src = winner.url;
+      document.getElementById("winnerName").textContent = winner.name;
+    }
+
+    initWorldCup();
+  </script>
+</body>
+</html>
